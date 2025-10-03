@@ -80,7 +80,8 @@ def predict_disease(model, image):
             predicted_class = PLANT_DISEASE_CLASSES[predicted_class_idx]
         else:
             predicted_class = f"Class_{predicted_class_idx}"
-        return predicted_class, confidence
+        # Cast confidence to float for compatibility with Streamlit progress bar
+        return predicted_class, float(confidence)
     except Exception as e:
         return f"Prediction error: {str(e)}", 0.0
 
@@ -142,7 +143,7 @@ def main():
                 image = Image.open(uploaded_file)
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.image(image, caption="Uploaded Image", use_container_width=True)
+                    st.image(image, caption="Uploaded Image", width='stretch')
                 with col2:
                     if st.button("🔍 Analyze Disease", type="primary"):
                         with st.spinner("Analyzing image..."):
@@ -153,7 +154,8 @@ def main():
                                 st.markdown(f"### 📊 Results:")
                                 st.markdown(f"**Predicted Class:** {clean_class}")
                                 st.markdown(f"**Confidence:** {confidence:.2f}%")
-                                st.progress(confidence / 100)
+                                # Ensure confidence is Python float and in [0, 1] range
+                                st.progress(min(max(float(confidence) / 100, 0), 1))
                                 if 'healthy' in predicted_class.lower():
                                     st.success("✅ Plant appears to be healthy!")
                                 else:
@@ -187,7 +189,7 @@ def main():
             st.markdown("---")
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
-                if st.button("🌾 Get Crop Recommendation", type="primary", use_container_width=True):
+                if st.button("🌾 Get Crop Recommendation", type="primary", width='stretch'):
                     with st.spinner("Analyzing soil and climate conditions..."):
                         recommended_crop = predict_crop(crop_model, features)
                         if "error" not in str(recommended_crop).lower():
@@ -222,7 +224,7 @@ def main():
         potassium_default = st.slider("Potassium (K, Weather Tab)", 5, 205, 50)
         ph_default = st.slider("pH Level (Weather Tab)", 3.5, 10.0, 6.5, step=0.1)
 
-        if st.button("⚡ Auto-Fill and Get Crop Recommendation", type="primary", use_container_width=True):
+        if st.button("⚡ Auto-Fill and Get Crop Recommendation", type="primary", width='stretch'):
             if not api_key or not city:
                 st.error("Please provide both API key and city name.")
             else:
